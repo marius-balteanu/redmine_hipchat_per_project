@@ -8,9 +8,7 @@ class HipchatController < ApplicationController
 
   def save
     val = @settings.value ||= {}
-    val[@project.id] = { auth_token: params[:settings][:auth_token],
-      room_id: params[:settings][:room_id], notify: params[:settings][:notify],
-      message_color: params[:settings][:message_color] }
+    val[@project.id] = hipchat_params
     @settings.update_attribute :value, val
     get_settings
     flash[:notice] = l :notice_successful_update
@@ -35,5 +33,10 @@ class HipchatController < ApplicationController
     @colors = [ l(:hipchat_settings_color_yellow),
       l(:hipchat_settings_color_red), l(:hipchat_settings_color_green),
       l(:hipchat_settings_color_purple), l(:hipchat_settings_color_random)]
+  end
+
+  def hipchat_params
+    params.require(:settings).permit(:auth_token, :room_id, :notify,
+      :message_color)
   end
 end
