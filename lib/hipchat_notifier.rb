@@ -65,13 +65,15 @@ module HipchatNotifier
   end
 
   def get_url(object)
-    if object.is_a? Issue
-      # TODO: Check if this gives a correct link
-      Rails.application.routes.url_helpers.issues_path object
-    else
-      # TODO: figure out what other classes should be supported here
-      raise "HipchatNotifier: unsupported url for #{ object.class.name }"
-    end
+    host_name, protocol = Setting[:host_name], Setting[:protocol]
+    url_method = if object.is_a? Issue
+        :issues_url
+      else
+        # TODO: figure out what other classes should be supported here
+        raise "HipchatNotifier: unsupported url for #{ object.class.name }"
+      end
+    Rails.application.routes.url_helpers.send url_method, object,
+      host: host_name, protocol: protocol
   end
 
   def get_settings(issue)
