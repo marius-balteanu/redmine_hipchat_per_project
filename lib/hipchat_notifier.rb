@@ -5,87 +5,82 @@ module HipchatNotifier
   include CustomFieldsHelper
 
   def send_issue_reported_to_hipchat(issue)
-    Rails.logger.info 'got hipchat issue'
+    Rails.logger.info 'Got hipchat issue'
     return unless @settings = get_settings(issue)
-    send_message headline_for_issue(issue, 'reported')
+    send_message headline_for_issue issue, 'reported'
   end
 
   def send_issue_updated_to_hipchat(journal)
     issue = journal.issue
     return unless @settings = get_settings(issue)
     # rescue is for link_to(attachment)
-    details = journal.details.map{|d| show_detail(d) rescue show_detail(d, :no_html) }.join("<br />")
-    comment = CGI::escapeHTML(journal.notes.to_s)
-
-    text    = headline_for_issue(issue, 'updated')
-    text   += "<br /> #{details}" unless details.blank?
-    text   += "<br /> <b>Comment</b> <i>#{truncate(comment)}</i>" unless comment.blank?
-
+    details = journal.details.map do |d|
+        show_detail(d) rescue show_detail(d, :no_html)
+      end.join('<br />')
+    comment = CGI::escapeHTML journal.notes.to_s
+    text = headline_for_issue issue, 'updated'
+    text += "<br />#{ details }" unless details.blank?
+    unless comment.blank?
+      text += "<br /><b>Comment</b><i>#{ truncate comment }</i>"
+    end
     send_message text
   end
 
   private
 
   def send_message(message)
-    if @settings[:auth_token].nil?    ||
-       @settings[:room_id].nil?       ||
-       @settings[:auth_token].blank?  ||
-       @settings[:room_id].blank?
-      Rails.logger.info "Unable to send HipChat message : config missing."
+    if @settings[:auth_token].nil? || @settings[:room_id].nil? ||
+        @settings[:auth_token].blank? || @settings[:room_id].blank?
+      Rails.logger.info 'Unable to send HipChat message : config missing.'
       return
     end
-
-    Rails.logger.info "Sending message to HipChat: #{message}."
-
-    req = Net::HTTP::Post.new("/v1/rooms/message")
-    req.set_form_data({
-      :auth_token => @settings[:auth_token],
-      :room_id => @settings[:room_id],
-      :notify => @settings[:notify] ? 1 : 0,
-      :from => 'Redmine',
-      :message => message,
-      :color => @settings[:message_color]
-    })
-    req["Content-Type"] = 'application/x-www-form-urlencoded'
-
-    http = Net::HTTP.new("api.hipchat.com", 443)
+    Rails.logger.info "Sending message to HipChat: #{ message }."
+    req = Net::HTTP::Post.new '/v1/rooms/message'
+    req.set_form_data auth_token: @settings[:auth_token], from: 'Redmine',
+      room_id: @settings[:room_id], message: message,
+      notify: @settings[:notify] ? 1 : 0, color: @settings[:message_color]
+    req['Content-Type'] = 'application/x-www-form-urlencoded'
+    http = Net::HTTP.new 'api.hipchat.com', 443
     http.use_ssl = true
     http.verify_mode = OpenSSL::SSL::VERIFY_NONE
     begin
       http.start do |connection|
-        connection.request(req)
+        connection.request req
       end
-    rescue Net::HTTPBadResponse => e
-      Rails.logger.error "Error hitting HipChat API: #{e}"
+    rescue Net::HTTPBadResponse => error
+      Rails.logger.error "Error hitting HipChat API: #{ error }"
     end
   end
 
   def headline_for_issue(issue, mode)
     project = issue.project
-    author  = CGI::escapeHTML(User.current.name)
+    author = CGI::escapeHTML(User.current.name)
     tracker = CGI::escapeHTML(issue.tracker.name.downcase)
     subject = CGI::escapeHTML(issue.subject)
-    url     = get_url issue
-
-    "#{author} #{mode} #{project.name} #{tracker} <a href=\"#{url}\">##{issue.id}</a>: #{subject} " + (issue.assigned_to.nil? ? '' : "assigned to #{issue.assigned_to.firstname} #{issue.assigned_to.lastname}")
+    url = get_url issue
+    assigned_to = issue.assigned_to
+    assignee = assigned_to ? " assigned to #{ assigned_to.name }" : ''
+    "#{ author } #{ mode } #{ project.name } #{ tracker } " <<
+      "<a href=\"#{ url }\">##{ issue.id }</a>: #{ subject }#{ assignee }"
   end
 
   def get_url(object)
-    case object
-      when Issue then "#{Setting[:protocol]}://#{Setting[:host_name]}/issues/#{object.id}"
+    if object.is_a? Issue
+      issue_url object
     else
-      Rails.logger.info "Asked redmine_hipchat for the url of an unsupported object #{object.inspect}"
+      Rails.logger.info "Asked redmine_hipchat for the url of an unsupported object #{ object.inspect }"
     end
   end
 
   def get_settings(issue)
-    Setting.find_by_name('plugin_redmine_hipchat_per_project').value[issue.project_id] rescue nil
+    settings = Setting.where(name: 'plugin_redmine_hipchat_per_project')
+      .first or return
+    settings.value[issue.project_id]
   end
 
   def truncate(text, length = 20, end_string = '...')
     return unless text
-    words = text.split()
-    words[0..(length-1)].join(' ') + (words.length > length ? end_string : '')
+    words = text.split
+    words.take(length).join(' ') << (words.size > length ? end_string : '')
   end
-
 end
