@@ -68,7 +68,8 @@ module HipchatNotifier
     if object.is_a? Issue
       issue_url object
     else
-      Rails.logger.info "Asked redmine_hipchat for the url of an unsupported object #{ object.inspect }"
+      # TODO: figure out what other classes should be supported here
+      raise "HipchatNotifier: unsupported url for #{ object.class.name }"
     end
   end
 
