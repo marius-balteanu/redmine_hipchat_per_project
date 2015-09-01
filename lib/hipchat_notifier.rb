@@ -21,7 +21,7 @@ module HipchatNotifier
     text = headline_for_issue issue, 'updated'
     text += "<br />#{ details }" unless details.blank?
     unless comment.blank?
-      text += "<br /><b>Comment</b><i>#{ truncate comment }</i>"
+      text += "<br /><b>Comment: </b><i>#{ truncate comment }</i>"
     end
     send_message text
   end
