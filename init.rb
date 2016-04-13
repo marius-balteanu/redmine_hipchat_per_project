@@ -19,6 +19,4 @@ Redmine::Plugin.register :redmine_hipchat_per_project do
     permission :set_hipchat_settings, { hipchat: :save  }
   end
   settings default: {}
-  menu :project_menu, :hipchat, { controller: 'hipchat', action: 'index' },
-    caption: 'HipChat Settings', param: :identifier
 end
