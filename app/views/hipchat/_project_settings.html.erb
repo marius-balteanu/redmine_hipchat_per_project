@@ -1,3 +1,26 @@
+<%
+  @settings = ActionController::Parameters.new(
+    Setting.plugin_redmine_hipchat_per_project
+  )
+
+  project_settings = @settings[@project.id]
+
+  unless project_settings.blank?
+    @auth_token     = project_settings[:auth_token]
+    @room_id        = project_settings[:room_id]
+    @notify         = project_settings[:notify]
+    @selected_color = project_settings[:message_color]
+  end
+
+  @colors = [
+    l(:hipchat_settings_color_yellow),
+    l(:hipchat_settings_color_red),
+    l(:hipchat_settings_color_green),
+    l(:hipchat_settings_color_purple),
+    l(:hipchat_settings_color_random)
+  ]
+%>
+
 <h2>HipChat settings</h2>
 <%= form_tag controller: 'hipchat', action: 'save' do %>
   <p>
@@ -24,7 +47,7 @@
           options_for_select(@colors, @selected_color) %>
   </p>
   <p>
-  	<%= submit_tag l(:button_apply) %>
+  	<%= submit_tag l(:button_save) %>
   </p>
 <% end %>
 <% html_title l(:hipchat_settings_header) %>
