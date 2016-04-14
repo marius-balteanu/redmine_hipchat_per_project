@@ -13,6 +13,7 @@ module RedmineHipchatPerProject
       module InstanceMethods
         def project_settings_tabs_with_hipchat
           tabs = project_settings_tabs_without_hipchat
+          return tabs unless @project.module_enabled? :hipchat
 
           tabs.push({
             action:     'index',
