@@ -16,12 +16,14 @@ module RedmineHipchatPerProject
           return tabs unless @project.module_enabled? :hipchat
 
           tabs.push({
-            action:     'index',
+            action:     :manage_hipchat_settings,
             controller: 'hipchat',
             label:      :hipchat_settings_header,
             name:       'hipchat',
             partial:    'hipchat/project_settings'
           })
+
+          tabs.select {|tab| User.current.allowed_to?(tab[:action], @project)}
         end
       end
     end
