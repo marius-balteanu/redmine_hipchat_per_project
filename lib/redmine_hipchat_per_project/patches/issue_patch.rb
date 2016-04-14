@@ -8,7 +8,7 @@ module RedmineHipchatPerProject
           after_create :send_hipchat
 
           def send_hipchat
-            return unless project.module_enabled? :redmine_hipchat_per_project
+            return unless project.module_enabled? :hipchat
             Rails.logger.info 'Sending hipchat'
             send_issue_reported_to_hipchat self
           end

@@ -4,7 +4,7 @@ en:
   hipchat_settings_color_random: random
   hipchat_settings_color_red: red
   hipchat_settings_color_yellow: yellow
-  hipchat_settings_header: HipChat Plugin Configuration
+  hipchat_settings_header: HipChat
   hipchat_settings_label_auth_token: Auth token
   hipchat_settings_label_message_color: Notify
   hipchat_settings_label_notify: Notify

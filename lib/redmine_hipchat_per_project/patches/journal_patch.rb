@@ -8,7 +8,7 @@ module RedmineHipchatPerProject
           after_create :send_hipchat
 
           def send_hipchat
-            return unless project.module_enabled? :redmine_hipchat_per_project
+            return unless project.module_enabled? :hipchat
             return unless self.journalized_type.to_s == 'Issue'
             send_issue_updated_to_hipchat self
           end

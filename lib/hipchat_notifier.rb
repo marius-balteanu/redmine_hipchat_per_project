@@ -77,9 +77,11 @@ module HipchatNotifier
   end
 
   def get_settings(issue)
-    settings = Setting.where(name: 'plugin_redmine_hipchat_per_project')
-      .first or return
-    settings.value[issue.project_id]
+    @settings = ActionController::Parameters.new(
+      Setting.plugin_redmine_hipchat_per_project
+    )
+
+    @settings[issue.project_id]
   end
 
   def truncate(text, length = 20, end_string = '...')
